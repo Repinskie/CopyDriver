@@ -1,14 +1,41 @@
+version: '3.8'
+
 services:
   mysql:
     image: 'mysql:latest'
+    container_name: copydriver-mySQL-container
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
+      - 'MYSQL_DATABASE=copydriver_db'
       - 'MYSQL_PASSWORD=secret'
       - 'MYSQL_ROOT_PASSWORD=verysecret'
       - 'MYSQL_USER=myuser'
     ports:
-      - '3306'
-  redis:
-    image: 'redis:latest'
+      - '3305:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - backend_network
+
+  spring-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: copydriver-backend-container
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/copydriver_db
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: secret
+    depends_on:
+      - mysql
     ports:
-      - '6379'
+      - '8400:8400'
+    networks:
+      - backend_network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  backend_network:
+    driver: bridge
